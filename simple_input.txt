@@ -1,0 +1,63 @@
+ Historical broadcasts summary [foreground]:
+
+  #0: act=android.intent.action.TIME_TICK flg=0x50000014 (has extras)
+
+    +1ms dispatch +128ms finish
+
+    enq=2016-11-21 17:06:18 disp=2016-11-21 17:06:18 fin=2016-11-21 17:06:18
+
+    extras: Bundle[{android.intent.extra.ALARM_COUNT=1}]
+
+  #1: act=android.intent.action.TIME_TICK flg=0x50000014 (has extras)
+
+    +2ms dispatch +152ms finish
+
+    enq=2016-11-21 17:05:50 disp=2016-11-21 17:05:50 fin=2016-11-21 17:05:50
+
+    extras: Bundle[{android.intent.extra.ALARM_COUNT=1}]
+
+  #2: act=android.intent.action.SCREEN_OFF flg=0x50000010
+
+    +5ms dispatch +412ms finish
+
+    enq=2016-11-21 17:04:09 disp=2016-11-21 17:04:09 fin=2016-11-21 17:04:09
+
+  #3: act=android.net.dhcp.DhcpClient.wlan0.RENEW flg=0x14000014 pkg=android (has extras)
+
+    0 dispatch +4ms finish
+
+    enq=2016-11-21 17:04:04 disp=2016-11-21 17:04:04 fin=2016-11-21 17:04:04
+
+    extras: Bundle[{android.intent.extra.ALARM_COUNT=1}]
+
+  #4: act=android.intent.action.TIME_TICK flg=0x50000014 (has extras)
+
+    0 dispatch +143ms finish
+
+    enq=2016-11-21 17:04:00 disp=2016-11-21 17:04:00 fin=2016-11-21 17:04:00
+
+    extras: Bundle[{android.intent.extra.ALARM_COUNT=1}]
+
+  #5: act=android.hardware.usb.action.USB_STATE flg=0x30000010 (has extras)
+
+    +1ms dispatch +4ms finish
+
+    enq=2016-11-21 17:03:38 disp=2016-11-21 17:03:38 fin=2016-11-21 17:03:38
+
+    extras: Bundle[{connected=true, unlocked=false, adb=true, mtp=true, configured=true}]
+
+  #6: act=android.hardware.usb.action.USB_STATE flg=0x30000010 (has extras)
+
+    +1ms dispatch 0 finish
+
+    enq=2016-11-21 17:03:38 disp=2016-11-21 17:03:38 fin=2016-11-21 17:03:38
+
+    extras: Bundle[{connected=true, unlocked=false, adb=true, mtp=true, configured=true}]
+
+  #7: act=android.hardware.usb.action.USB_STATE flg=0x30000010 (has extras)
+
+    0 dispatch +3ms finish
+
+    enq=2016-11-21 17:03:38 disp=2016-11-21 17:03:38 fin=2016-11-21 17:03:38
+
+    extras: Bundle[{connected=true, unlocked=false, adb=true, mtp=true, configured=false}]
