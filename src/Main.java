@@ -5,8 +5,6 @@
 import java.io.File;
 import java.util.ArrayList;
 
-
-
 public class Main {
     public static void main(String[] args) throws Exception {
         // Folder name where input files are contained.
@@ -18,11 +16,11 @@ public class Main {
             uLogList.add(parser.parseLog());
         }
 
-        for (UserLog uLog : uLogList) {
-            System.out.println("---------------- "+ uLog.getFilename()+" ----------------");
-            uLog.getScreenContents();
-            uLog.getGpsInfo();
-        }
+//        for (UserLog uLog : uLogList) {
+//            System.out.println("---------------- "+ uLog.getFilename()+" ----------------");
+//            uLog.getScreenContents();
+//            uLog.getGpsInfo();
+//        }
 
     }
 

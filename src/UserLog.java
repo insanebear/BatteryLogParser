@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 /**
  * Created by Youlim Jung on 2017-05-03.
  */
@@ -46,7 +48,7 @@ public class UserLog {
     }
 
     public void getGpsInfo() {
-        System.out.println("GPS Total Duration:"+gpsInfo.getGpsDuration());
+//        System.out.println("GPS Total Duration:"+gpsInfo.getGpsDuration());
     }
 
     public void setGpsInfo(GpsInfo gpsInfo) {
@@ -56,10 +58,24 @@ public class UserLog {
 
 
     public void getScreenContents(){
-        for(int i=0; i<screenInfo.getScreenLevel().size();i++){
-            System.out.println(screenInfo.getScreenLevel().get(i));
-            System.out.println(screenInfo.getScreenDuration().get(i));
-            //System.out.println(screenInfo.dateToStr(screenInfo.getScreenDuration().get(i)));
+        ArrayList<String[]> screenHistory = screenInfo.getScreenInfoArr();
+        int idx = 1;
+        for (String[] sa :
+                screenHistory) {
+            System.out.println(idx+"th trace: [Level] "+sa[0]+" [Start Time] "+sa[1]
+                    +" [End Time] "+sa[2]+" [Duration] "+sa[3]);
+            idx++;
+        }
+    }
+
+    public void getGpsContents(){
+        ArrayList<String[]> gpsHistory = gpsInfo.getGpsInfoArr();
+        int idx = 1;
+        for (String[] sa :
+                gpsHistory) {
+            System.out.println(idx+"th trace: [Start Time] "+sa[0]
+                    +" [End Time] "+sa[1]+" [Duration] "+sa[2]);
+            idx++;
         }
     }
 }

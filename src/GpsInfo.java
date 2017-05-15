@@ -4,87 +4,45 @@ import java.util.ArrayList;
  * Created by Youlim Jung on 2017-05-03.
  */
 public class GpsInfo extends Information {
-    private String startStamp;
-    private String endStamp;
-    private String gpsDuration;
-    private ArrayList<String> durationList;
+    private ArrayList<String[]> gpsInfoArr; // start_timestamp, end_timestamp, duration
 
     public GpsInfo(){
-        durationList = new ArrayList<>();
+        this.gpsInfoArr = new ArrayList<>();
     }
-
-    public String getStartStamp() {
-        return startStamp;
+    public void setPrevEndTime(String time){
+        String[] prevInfo = gpsInfoArr.get(gpsInfoArr.size()-1);
+        prevInfo[1] = time; // set previous end_timestamp
     }
-
-    public void setStartStamp(String startStamp) {
-        this.startStamp = startStamp;
+    public String getPrevEndTime(){
+        String[] prevInfo = gpsInfoArr.get((gpsInfoArr.size()-1));
+        return prevInfo[1];
     }
-
-    public String getEndStamp() {
-        return endStamp;
+    public String getPrevStartTime(){
+        String[] prevInfo = gpsInfoArr.get((gpsInfoArr.size()-1));
+        return prevInfo[0];
     }
-
-    public void setEndStamp(String endStamp) {
-        this.endStamp = endStamp;
+    public int getInfoArrLength(){
+        return gpsInfoArr.size();
     }
-
-    public String getGpsDuration() {
-        return gpsDuration;
+    public void setGpsDuration(String duration) {
+        String[] prevInfo = gpsInfoArr.get((gpsInfoArr.size()-1));
+        prevInfo[2] = duration;
     }
-
-    private void setGpsDuration(String gpsDuration) {
-        this.gpsDuration = gpsDuration;
+    public void setGpsInfoArr(String[] gpsInfoArr){
+        this.gpsInfoArr.add(gpsInfoArr);
     }
-
-    public void appendDurationList(String duration){
-        this.durationList.add(duration);
-    }
-
-    public void printDurationList(){
-        for(String s:durationList){
-            System.out.println(s);
-        }
+    public ArrayList<String[]> getGpsInfoArr() {
+        return gpsInfoArr;
     }
 
     public void calTotalDuration(){
         String result="00h 00m 00s 00ms";
-        for(String s: durationList){
-            result = addDuration(result,s);
+        for(String[] sa: gpsInfoArr){
+            if(sa[2]!=null){
+                result = addDuration(result,sa[2]);
+            }
         }
         setGpsDuration(result);
     }
-
-    //    private Date startStamp;
-//    private Date endStamp;
-//    private Date gpsDuration;
-//
-//    public GpsInfo(){
-//
-//    }
-//
-//    public Date getStartStamp() {
-//        return startStamp;
-//    }
-//
-//    public void setStartStamp(Date startStamp) {
-//        this.startStamp = startStamp;
-//    }
-//
-//    public Date getEndStamp() {
-//        return endStamp;
-//    }
-//
-//    public void setEndStamp(Date endStamp) {
-//        this.endStamp = endStamp;
-//    }
-//
-//    public Date getGpsDuration() {
-//        return gpsDuration;
-//    }
-//
-//    public void setGpsDuration(Date gpsDuration) {
-//        this.gpsDuration = gpsDuration;
-//    }
 
 }
