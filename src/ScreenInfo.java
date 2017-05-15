@@ -1,30 +1,48 @@
 import java.util.ArrayList;
-import java.util.Date;
 //import java.time.Duration;
 
 /**
  * Created by Youlim Jung on 2017-04-29.
  */
 public class ScreenInfo extends Information {
-    private ArrayList<String> screenLevel;
-    //private ArrayList<Date> screenDuration;
-    private ArrayList<String> screenDuration;
+    private ArrayList<String[]> screenInfoArr; // level(brightness), start_timestamp, end_timestamp, duration
 
     public ScreenInfo() {
-        this.screenLevel = new ArrayList<>();
-        this.screenDuration = new ArrayList<>();
+        this.screenInfoArr = new ArrayList<>();
     }
 
-    public ArrayList<String> getScreenLevel() { return screenLevel; }
-
-    public void setScreenLevel(String screenLevel) {
-        this.screenLevel.add(screenLevel);
+    public void setPrevEndTime(String time){
+        String[] prevInfo = screenInfoArr.get(screenInfoArr.size()-1);
+        prevInfo[2] = time; // set previous end_timestamp
+    }
+    public String getPrevEndTime(){
+        String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
+        return prevInfo[2];
+    }
+    public String getPrevStartTime(){
+        String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
+        return prevInfo[1];
     }
 
-    //public ArrayList<Date> getScreenDuration() { return screenDuration; }
-    public ArrayList<String> getScreenDuration() { return screenDuration; }
+    public int getInfoArrLength(){
+        return screenInfoArr.size();
+    }
 
-//    public void setScreenDuration(Date screenDuration) { this.screenDuration.add(screenDuration); }
-    public void setScreenDuration(String screenDuration) { this.screenDuration.add(screenDuration); }
+
+    public void setScreenDuration(String duration){
+        String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
+        prevInfo[3] = duration;
+    }
+    public String getPrevScreenLevel(){
+        return screenInfoArr.get((screenInfoArr.size()-1))[0];
+    }
+
+    public void setScreenInfoArr(String[] screenInfoArr){
+        this.screenInfoArr.add(screenInfoArr);
+    }
+
+    public ArrayList<String[]> getScreenInfoArr() {
+        return screenInfoArr;
+    }
 
 }
