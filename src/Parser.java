@@ -1,6 +1,5 @@
 import java.io.*;
 import java.text.ParseException;
-import java.util.Arrays;
 
 /**
  * Created by Youlim Jung on 2017-05-02.
@@ -33,27 +32,40 @@ public class Parser {
         userLog.setFilename(file.getName());
 
         while ((s = reader.readLine()) != null) {
-            if (s.matches("  Screen brightnesses:")) {
-                for (int i = 0; i < 5; i++) {
-                    reader.readLine();
-                    s = reader.readLine();
-                    parseScreen(s);
-                }
-                userLog.setScreenInfo(screenInfo);
-            }else if (s.matches("  Radio types:")) {
-                while(!(s = reader.readLine()).contains("Bluetooth")){
-                    parseConn(s);
-                }
-                userLog.setConnInfo(connInfo);
-            }else if (s.contains("Battery History")){
+//            if (s.matches("  Screen brightnesses:")) {
+////                for (int i = 0; i < 5; i++) {
+////                    reader.readLine();
+////                    s = reader.readLine();
+////                    parseScreen(s);
+////                }
+//
+////            }else if (s.matches("  Radio types:")) {
+////                while(!(s = reader.readLine()).contains("Bluetooth")){
+////                    parseDataConn(s);
+////                }
+////                userLog.setConnInfo(connInfo);
+//            }else
+            if (s.contains("Battery History")){
                 while(!(s = reader.readLine()).contains("Per-PID Stats:")){
                     if(s.contains("gps")){
                         parseGps(s);
                     }
+                    if(s.contains("brightness=") || s.contains("screen ")){
+                        parseScreen(s);
+                    }
+                    if(s.contains("mobile_radio") || s.contains("data_conn=")){
+                        parseDataConn(s);
+                    }
+                    if(s.contains("wifi_radio")){
+                        parseWifiConn(s);
+                    }
                 }
-                //gpsInfo.printDurationList();
+
+                // GPS
                 gpsInfo.calTotalDuration();
                 userLog.setGpsInfo(gpsInfo);
+                // SCREEN
+                userLog.setScreenInfo(screenInfo);
             }
         }
 
@@ -61,59 +73,159 @@ public class Parser {
         return userLog;
     }
 
-    private void parseScreen(String s) throws ParseException {
+    private void parseScreen(String s){
+        final String BRIGHTNESS_CHECK = "brightness=";
+        String[] tempInfo = new String[4]; // level, start, end, duration
         String line = s.trim();
-        String[] values = line.split(" ");
-        String[] subvalues = Arrays.copyOfRange(values, 1, values.length-1);
-        String time = arrToString(subvalues);
-        String[] timeArray = makeTimeArray(time);
 
-        screenInfo.setScreenLevel(values[0]);
+        String time, startT, endT, duration;
 
-        screenInfo.setScreenDuration(screenInfo.padZero(timeArray));
+        int brightIdx = line.indexOf(BRIGHTNESS_CHECK)+BRIGHTNESS_CHECK.length();
 
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
+        }else{
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
+        }
+        time = screenInfo.padZero(makeTimeArray(time));
+        tempInfo[1] = time;
+
+        // Parsing information
+        if(line.contains("screen ") && !line.contains(BRIGHTNESS_CHECK)){
+            int idx = line.indexOf("screen ");
+            if(line.charAt(idx-1)=='+'){
+                // Assume brightness as MEDIUM
+                tempInfo[0] = "medium";
+            }else{
+                // Assume brightness as DARK
+                tempInfo[0] = "dark";
+            }
+        }else{
+            if(line.charAt(brightIdx) == 'd'){
+                if(line.charAt(brightIdx+1)== 'i'){ // dim
+                    tempInfo[0] = "dim";
+                }else{ // dark
+                    tempInfo[0] = "dark";
+                }
+            }else if(line.charAt(brightIdx) == 'm'){ // medium
+                tempInfo[0] = "medium";
+            }else if(line.charAt(brightIdx) == 'l'){ // light
+                tempInfo[0] = "light";
+            }else{ // bright
+                tempInfo[0] = "bright";
+            }
+        }
+
+        if(screenInfo.getInfoArrLength()>0){
+            screenInfo.setPrevEndTime(time);
+
+            startT = screenInfo.getPrevStartTime();
+            endT = screenInfo.getPrevEndTime();
+            duration = screenInfo.calculateDuration(endT, startT);
+            screenInfo.setScreenDuration(duration);
+        }
+        screenInfo.setScreenInfoArr(tempInfo);
     }
 
     private void parseGps(String s) throws ParseException{
         String line = s.trim();
-        String[] values = line.split(" ");
-        String time = insertSpace(values[0].substring(1));
-        String[] timeArray = makeTimeArray(time); // h, min, sec, msec
-        int idx = s.indexOf("gps");
+        String time, startT, endT, duration;
+        String[] tempInfo = new String[3]; // start, end, duration
+        int idx = line.indexOf("gps");
 
-        if(s.charAt(idx-1) == '+'){
-            //set start stamp
-            //System.out.println("in parseGps: "+padZero(timeArray));
-            gpsInfo.setStartStamp(gpsInfo.padZero(timeArray));
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
         }else{
-            //set end stamp
-            gpsInfo.setEndStamp(gpsInfo.padZero(timeArray));
-            //calculate duration time
-            String duration = gpsInfo.calculateDuration(gpsInfo.getEndStamp(), gpsInfo.getStartStamp());
-            gpsInfo.appendDurationList(duration);
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
         }
+        time = gpsInfo.padZero(makeTimeArray(time));
+        tempInfo[0] = time;
+
+        if(gpsInfo.getInfoArrLength()>0){
+            gpsInfo.setPrevEndTime(time);
+
+            // calculate previous duration
+            startT = gpsInfo.getPrevStartTime();
+            endT = gpsInfo.getPrevEndTime();
+            duration = gpsInfo.calculateDuration(endT, startT);
+            gpsInfo.setGpsDuration(duration);
+        }
+        gpsInfo.setGpsInfoArr(tempInfo);
+
     }
 
-    private void parseConn(String s){
+    private void parseDataConn(String s){
+        final String DATACONN_CHECK = "data_conn=";
         String line = s.trim();
-        String[] values = line.split(" ");
-        String[] subvalues = Arrays.copyOfRange(values, 1, values.length-1);
-        String time = arrToString(subvalues);
-        String[] timeArray = makeTimeArray(time);
+        String[] tempInfo = new String[4]; // type, start, end, duration
 
-        connInfo.setConnType(values[0]);
+        String time, startT, endT, duration;
 
-        //screenInfo.setScreenDuration(screenInfo.padZero(timeArray));
-        if(values[0].matches("none") || values[0].matches("hspa")){
-
-        }else if(values[0].matches("lte")){
-
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
+        }else{
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
         }
-        // 3G
+        time = connInfo.padZero(makeTimeArray(time));
+        tempInfo[1] = time;
 
-        // LTE
+        // Parsing information
+        if(line.contains("+mobile_radio") && !line.contains(DATACONN_CHECK)){
+            // Assume conn_type = "3g"
+            tempInfo[0] = "3g";
+        }else if(line.contains(DATACONN_CHECK)) {
+            int idx = line.indexOf(DATACONN_CHECK) + DATACONN_CHECK.length();
+            if (line.charAt(idx) == 'n' || line.charAt(idx) == 'h') { // none or hspa
+                tempInfo[0] = "3g";
+            } else if (line.charAt(idx) == 'l') { // lte
+                tempInfo[0] = "lte";
+            }
+        }
 
-        // WiFi
+        if(connInfo.getDataConn().getInfoArrLength() > 0){
+            connInfo.getDataConn().setPrevEndTime(time);
+
+            startT = connInfo.getDataConn().getPrevStartTime();
+            endT = connInfo.getDataConn().getPrevEndTime();
+            duration = connInfo.calculateDuration(endT, startT);
+            connInfo.getDataConn().setConnDuration(duration);
+        }
+        connInfo.getDataConn().setDataConnInfoArr(tempInfo);
+
+    }
+
+    private void parseWifiConn(String s){
+        final String WIFI_CHECK = "wifi_radio";
+        String line = s.trim();
+        String[] tempInfo = new String[3]; // start, end, duration
+
+        String time, startT, endT, duration;
+
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
+        }else{
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
+        }
+        time = connInfo.padZero(makeTimeArray(time));
+
+        int idx = line.indexOf(WIFI_CHECK);
+        if(line.charAt(idx-1)=='+'){
+            tempInfo[0] = time;
+        }else{
+            if(connInfo.getWifiConn().getInfoArrLength() > 0){
+                connInfo.getWifiConn().setPrevEndTime(time);
+
+                startT = connInfo.getWifiConn().getPrevStartTime();
+                endT = connInfo.getWifiConn().getPrevEndTime();
+                duration = connInfo.calculateDuration(endT, startT);
+                connInfo.getWifiConn().setConnDuration(duration);
+            }
+        }
+        connInfo.getWifiConn().setWifiConnInfoArr(tempInfo);
     }
 
     private String[] makeTimeArray(String timeString) {
@@ -135,7 +247,7 @@ public class Parser {
             }
         }
 
-        //System.out.println("Array: "+Arrays.toString(timeArray));
+//        System.out.println("Array: "+Arrays.toString(timeArray));
         return timeArray;
     }
 
@@ -173,16 +285,17 @@ public class Parser {
         return result;
     }
 
-    private String arrToString(String[] strings){
-        String result = "";
-//        for(int i=0; i<strings.length; i++){
-//            result = result + strings[i];
+
+//    private String arrToString(String[] strings){
+//        String result = "";
+////        for(int i=0; i<strings.length; i++){
+////            result = result + strings[i];
+////        }
+//        for (String s : strings){
+//            result+=s;
 //        }
-        for (String s : strings){
-            result+=s;
-        }
-        return insertSpace(result);
-    }
+//        return insertSpace(result);
+//    }
 //    private String padZero(String[] strings){
 //        for (int i=0; i<strings.length; i++) {
 //            if(strings[i]==null && i != 3){ // no digit h, m, s
@@ -231,4 +344,18 @@ public class Parser {
 //        //return padZero(formatTimeStr(res));
 //        return padZero(res);
 //    }
+
+//    private void parseScreen(String s) throws ParseException {
+//        String line = s.trim();
+//        String[] values = line.split(" ");
+//        String[] subvalues = Arrays.copyOfRange(values, 1, values.length-1);
+//        String time = arrToString(subvalues);
+//        String[] timeArray = makeTimeArray(time);
+//
+//        screenInfo.setScreenInfoArr(values[0]);
+//
+//        screenInfo.setScreenDuration(screenInfo.padZero(timeArray));
+//
+//    }
 }
+
