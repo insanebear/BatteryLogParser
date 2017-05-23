@@ -6,6 +6,7 @@ import java.text.ParseException;
  */
 public class Parser {
     private File file;
+    private Information info;
     private AudioInfo audioInfo;
     private ConnInfo connInfo;
     private CpuInfo cpuInfo;
@@ -15,6 +16,7 @@ public class Parser {
 
     public Parser(File file) {
         this.file = file;
+        info = new Information();
         audioInfo = new AudioInfo();
         connInfo = new ConnInfo();
         cpuInfo = new CpuInfo();
@@ -32,19 +34,6 @@ public class Parser {
         userLog.setFilename(file.getName());
 
         while ((s = reader.readLine()) != null) {
-//            if (s.matches("  Screen brightnesses:")) {
-////                for (int i = 0; i < 5; i++) {
-////                    reader.readLine();
-////                    s = reader.readLine();
-////                    parseScreen(s);
-////                }
-//
-////            }else if (s.matches("  Radio types:")) {
-////                while(!(s = reader.readLine()).contains("Bluetooth")){
-////                    parseDataConn(s);
-////                }
-////                userLog.setConnInfo(connInfo);
-//            }else
             if (s.contains("Battery History")){
                 while(!(s = reader.readLine()).contains("Per-PID Stats:")){
                     if(s.contains("gps")){
@@ -59,18 +48,144 @@ public class Parser {
                     if(s.contains("wifi_radio")){
                         parseWifiConn(s);
                     }
+                    if(s.contains("+running") || s.contains("-running")){
+                        parseCpu(s);
+                    }
+                    if(s.contains("+audio") || s.contains("-audio")){
+                        parseAudio(s);
+                    }
                 }
+            } else if(s.contains("Historical broadcasts summary [foreground]:")){
+                while(!s.contains("Historical broadcasts [background]:") &&
+                        !s.contains("Delayed Historical broadcasts [foreground]:")){
+                    parseVolumeFore(s);
+                    s = reader.readLine();
+                }
+            }else if(s.contains("Historical broadcasts summary [background]:")){
+                while(!s.contains("Sticky broadcasts for user -1:") &&
+                        !s.contains("Aborted Historical broadcasts [background]:")){
 
-                // GPS
-                gpsInfo.calTotalDuration();
-                userLog.setGpsInfo(gpsInfo);
-                // SCREEN
-                userLog.setScreenInfo(screenInfo);
+                    parseVolumeBack(s);
+                    s = reader.readLine();
+                }
+            }else if(s.contains("Total run time:")){
+                parseTimeOnBattery(s);
             }
         }
 
+        // CPU
+        userLog.setCpuInfo(cpuInfo);
+        // Audio
+        userLog.setAudioInfo(audioInfo);
+        // Screen
+        userLog.setScreenInfo(screenInfo);
+        // GPS
+        userLog.setGpsInfo(gpsInfo);
+        // Network Connectivity
+        userLog.setConnInfo(connInfo);
+
         reader.close();
         return userLog;
+    }
+
+    private void parseCpu(String s){
+        final String CPU_CHECK = "running";
+        String line = s.trim();
+        String[] tempInfo;
+        String time;
+        int idx = line.indexOf(CPU_CHECK);
+
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
+        }else{
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
+        }
+        time = cpuInfo.padZero(makeTimeArray(time));
+
+        if(line.charAt(idx-1)=='+'){
+            tempInfo = new String[3]; // start, end, duration
+            tempInfo[0] = time; // set start
+            cpuInfo.addInfoArr(tempInfo);
+        }else{
+            setTime(cpuInfo, time); // set prev end, calculate and set duration
+        }
+    }
+
+    private void parseAudio(String s){
+        final String AUDIO_CHECK = "audio";
+        String line = s.trim();
+        String[] tempInfo;
+        String time;
+        int idx = line.indexOf(AUDIO_CHECK);
+
+        // Parsing time
+        if(line.charAt(0)=='0'){
+            time = "0h 0m 0s 0ms";
+        }else{
+            time = insertSpace(line.substring(1, line.indexOf("(")-1));
+        }
+        time = audioInfo.padZero(makeTimeArray(time));
+
+        if(line.charAt(idx-1)=='+'){
+            tempInfo = new String[3]; // start, end, duration
+            tempInfo[0] = time;
+            audioInfo.addInfoArr(tempInfo);
+        }else{
+            setTime(audioInfo, time);
+        }
+    }
+
+    private void parseVolumeFore(String s) {
+        final String SUMMARY_CHECK = "Historical broadcasts summary";
+        final String VOLUME_CHECK = "android.media.EXTRA_VOLUME_STREAM_VALUE=";
+
+        String line = s.trim();
+        VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
+        String type = "";
+        int idx = line.indexOf(SUMMARY_CHECK);
+
+        // save the summary type
+        if (s.contains(SUMMARY_CHECK)) {
+            type = line.substring(idx + SUMMARY_CHECK.length() + 2, line.length() - 2);
+            if (type.equals("foreground")) {
+                volumeHistories[0].setSummaryType("foreground");
+            }
+        }
+
+        // count volume level
+        if (s.contains(VOLUME_CHECK)) {
+            int idxVolume = line.indexOf(VOLUME_CHECK) + VOLUME_CHECK.length();
+            int level = Integer.parseInt((line.substring(idxVolume, idxVolume + 1)));
+            volumeHistories[0].setVolumeLevel(level);
+        }
+    }
+
+    private void parseVolumeBack(String s){
+        final String SUMMARY_CHECK = "Historical broadcasts summary";
+        final String VOLUME_CHECK = "android.media.EXTRA_VOLUME_STREAM_VALUE=";
+
+        String line = s.trim();
+        VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
+
+        int idx = line.indexOf(SUMMARY_CHECK);
+
+        String type = "";
+
+        // save the summary type
+        if(s.contains(SUMMARY_CHECK)){
+            type = line.substring(idx+SUMMARY_CHECK.length()+2, line.length()-2);
+            if(type.equals("background")){
+                volumeHistories[1].setSummaryType("background");
+            }
+        }
+
+        // count volume level
+        if(s.contains(VOLUME_CHECK)){
+            int idxVolume = line.indexOf(VOLUME_CHECK) + VOLUME_CHECK.length();
+            int level = Integer.parseInt((line.substring(idxVolume, idxVolume+1)));
+            volumeHistories[1].setVolumeLevel(level);
+        }
     }
 
     private void parseScreen(String s){
@@ -78,7 +193,7 @@ public class Parser {
         String[] tempInfo = new String[4]; // level, start, end, duration
         String line = s.trim();
 
-        String time, startT, endT, duration;
+        String time;
 
         int brightIdx = line.indexOf(BRIGHTNESS_CHECK)+BRIGHTNESS_CHECK.length();
 
@@ -95,13 +210,13 @@ public class Parser {
         if(line.contains("screen ") && !line.contains(BRIGHTNESS_CHECK)){
             int idx = line.indexOf("screen ");
             if(line.charAt(idx-1)=='+'){
-                // Assume brightness as MEDIUM
+                // Assume brightness as MEDIUM when +screen but no brightness
                 tempInfo[0] = "medium";
             }else{
-                // Assume brightness as DARK
+                // Assume brightness as DARK when -screen but no brightness
                 tempInfo[0] = "dark";
             }
-        }else{
+        }else{ // Parse after "brightness ="
             if(line.charAt(brightIdx) == 'd'){
                 if(line.charAt(brightIdx+1)== 'i'){ // dim
                     tempInfo[0] = "dim";
@@ -117,21 +232,14 @@ public class Parser {
             }
         }
 
-        if(screenInfo.getInfoArrLength()>0){
-            screenInfo.setPrevEndTime(time);
-
-            startT = screenInfo.getPrevStartTime();
-            endT = screenInfo.getPrevEndTime();
-            duration = screenInfo.calculateDuration(endT, startT);
-            screenInfo.setScreenDuration(duration);
-        }
-        screenInfo.setScreenInfoArr(tempInfo);
+        setTime(screenInfo, time);
+        screenInfo.addInfoArr(tempInfo);
     }
 
-    private void parseGps(String s) throws ParseException{
+    private void parseGps(String s){
         String line = s.trim();
-        String time, startT, endT, duration;
-        String[] tempInfo = new String[3]; // start, end, duration
+        String time;
+        String[] tempInfo;
         int idx = line.indexOf("gps");
 
         // Parsing time
@@ -141,27 +249,21 @@ public class Parser {
             time = insertSpace(line.substring(1, line.indexOf("(")-1));
         }
         time = gpsInfo.padZero(makeTimeArray(time));
-        tempInfo[0] = time;
 
-        if(gpsInfo.getInfoArrLength()>0){
-            gpsInfo.setPrevEndTime(time);
-
-            // calculate previous duration
-            startT = gpsInfo.getPrevStartTime();
-            endT = gpsInfo.getPrevEndTime();
-            duration = gpsInfo.calculateDuration(endT, startT);
-            gpsInfo.setGpsDuration(duration);
+        if(line.charAt(idx-1)=='+'){
+            tempInfo = new String[3]; // start, end, duration
+            tempInfo[0] = time;
+            gpsInfo.addInfoArr(tempInfo);
+        }else{
+            setTime(gpsInfo, time);
         }
-        gpsInfo.setGpsInfoArr(tempInfo);
-
     }
 
     private void parseDataConn(String s){
         final String DATACONN_CHECK = "data_conn=";
         String line = s.trim();
-        String[] tempInfo = new String[4]; // type, start, end, duration
-
-        String time, startT, endT, duration;
+        String[] tempInfo;
+        String time;
 
         // Parsing time
         if(line.charAt(0)=='0'){
@@ -170,39 +272,35 @@ public class Parser {
             time = insertSpace(line.substring(1, line.indexOf("(")-1));
         }
         time = connInfo.padZero(makeTimeArray(time));
-        tempInfo[1] = time;
 
         // Parsing information
         if(line.contains("+mobile_radio") && !line.contains(DATACONN_CHECK)){
-            // Assume conn_type = "3g"
+            // Assume conn_type = "3g" when +mobile_radio but no "data_conn="
+            tempInfo = new String[4]; // type, start, end, duration
             tempInfo[0] = "3g";
+            tempInfo[1] = time;
+            connInfo.getDataConn().addInfoArr(tempInfo);
         }else if(line.contains(DATACONN_CHECK)) {
+            tempInfo = new String[4]; // type, start, end, duration
             int idx = line.indexOf(DATACONN_CHECK) + DATACONN_CHECK.length();
             if (line.charAt(idx) == 'n' || line.charAt(idx) == 'h') { // none or hspa
                 tempInfo[0] = "3g";
             } else if (line.charAt(idx) == 'l') { // lte
                 tempInfo[0] = "lte";
             }
+            tempInfo[1] = time;
+            connInfo.getDataConn().addInfoArr(tempInfo);
         }
+        setTime(connInfo.getDataConn(), time);
 
-        if(connInfo.getDataConn().getInfoArrLength() > 0){
-            connInfo.getDataConn().setPrevEndTime(time);
-
-            startT = connInfo.getDataConn().getPrevStartTime();
-            endT = connInfo.getDataConn().getPrevEndTime();
-            duration = connInfo.calculateDuration(endT, startT);
-            connInfo.getDataConn().setConnDuration(duration);
-        }
-        connInfo.getDataConn().setDataConnInfoArr(tempInfo);
 
     }
 
     private void parseWifiConn(String s){
         final String WIFI_CHECK = "wifi_radio";
         String line = s.trim();
-        String[] tempInfo = new String[3]; // start, end, duration
-
-        String time, startT, endT, duration;
+        String[] tempInfo;
+        String time;
 
         // Parsing time
         if(line.charAt(0)=='0'){
@@ -214,20 +312,34 @@ public class Parser {
 
         int idx = line.indexOf(WIFI_CHECK);
         if(line.charAt(idx-1)=='+'){
-            tempInfo[0] = time;
+            tempInfo = new String[4]; // type, start, end, duration
+            tempInfo[0] = "wifi";
+            tempInfo[1] = time;
+            connInfo.getWifiConn().addInfoArr(tempInfo);
         }else{
-            if(connInfo.getWifiConn().getInfoArrLength() > 0){
-                connInfo.getWifiConn().setPrevEndTime(time);
-
-                startT = connInfo.getWifiConn().getPrevStartTime();
-                endT = connInfo.getWifiConn().getPrevEndTime();
-                duration = connInfo.calculateDuration(endT, startT);
-                connInfo.getWifiConn().setConnDuration(duration);
-            }
+            setTime(connInfo.getWifiConn(), time);
         }
-        connInfo.getWifiConn().setWifiConnInfoArr(tempInfo);
     }
 
+    private void parseTimeOnBattery(String s){
+        final String TIME_CHECK = "Total run time:";
+        String line = s.trim();
+        int idx1 = line.indexOf(TIME_CHECK) + TIME_CHECK.length() + 1;
+        int idx2 = line.indexOf("realtime")-1;
+        String tempTime = line.substring(idx1, idx2);
+        String time = info.padZero(makeTimeArray(tempTime));
+
+        userLog.setTotalTime(time);
+        setTime(cpuInfo, time);
+        setTime(audioInfo, time);
+        setTime(screenInfo, time);
+        setTime(gpsInfo, time);
+        setTime(connInfo.getDataConn(), time);
+        setTime(connInfo.getWifiConn(), time);
+
+    }
+
+    // Parse Time
     private String[] makeTimeArray(String timeString) {
         String[] timeArray = new String[4];
         String[] tempArray = timeString.split(" ");
@@ -285,77 +397,17 @@ public class Parser {
         return result;
     }
 
+    private void setTime(Information infoClass, String time){
+        if(infoClass.getInfoArrLength() > 0){
+            infoClass.setPrevEndTime(time); // update prev end time
 
-//    private String arrToString(String[] strings){
-//        String result = "";
-////        for(int i=0; i<strings.length; i++){
-////            result = result + strings[i];
-////        }
-//        for (String s : strings){
-//            result+=s;
-//        }
-//        return insertSpace(result);
-//    }
-//    private String padZero(String[] strings){
-//        for (int i=0; i<strings.length; i++) {
-//            if(strings[i]==null && i != 3){ // no digit h, m, s
-//                strings[i] = "00";
-//            }else if(strings[i].length()==1 && i != 3){ // 1 digit h, m, s
-//                strings[i] = "0"+strings[i];
-//            }else if(i == 3){ // ms
-//                if(strings[i].length() == 1){
-//                    strings[i] = "00"+strings[i];
-//                }else if (strings[i].length() == 2){
-//                    strings[i] = "0"+strings[i];
-//                }else if(strings[i]==null){
-//                    strings[i] = "000";
-//                }
-//            }
-//        }
-//        return addUnits(strings);
-//    }
-//
-//    private String addUnits(String[] values){
-//        return values[0]+"h "+values[1]+"m "+values[2]+"s "+values[3]+"ms";
-//    }
+            String startT = infoClass.getPrevStartTime();
+            String endT = infoClass.getPrevEndTime();
+            String duration = infoClass.calculateDuration(endT, startT); // calculate duration
 
-//    private String[] formatTimeStr(String[] values){
-//        String[] result = new String[4];
-//        for(String value: values){
-//            String sub =value.substring(value.length()-2);
-//            if(sub.matches("ms")){
-//                result[3] = value.substring(0, value.length()-2);
-//            }else{
-//                if(value.substring(value.length()-1).matches("m")) {
-//                    result[1] = value.substring(0, value.length()-1);
-//                }else if(value.substring(value.length()-1).matches("s")){
-//                    result[2] = value.substring(0, value.length()-1);
-//                }else if(value.substring(value.length()-1).matches("h")){
-//                    result[0] = value.substring(0, value.length()-1);
-//                }
-//            }
-//        }
-//
-//        return result;
-//    }
+            infoClass.setDuration(duration);
+        }
+    }
 
-//    private String convertFormat(String original){
-//        String[] res = original.split("[a-z]");
-//        //return padZero(formatTimeStr(res));
-//        return padZero(res);
-//    }
-
-//    private void parseScreen(String s) throws ParseException {
-//        String line = s.trim();
-//        String[] values = line.split(" ");
-//        String[] subvalues = Arrays.copyOfRange(values, 1, values.length-1);
-//        String time = arrToString(subvalues);
-//        String[] timeArray = makeTimeArray(time);
-//
-//        screenInfo.setScreenInfoArr(values[0]);
-//
-//        screenInfo.setScreenDuration(screenInfo.padZero(timeArray));
-//
-//    }
 }
 

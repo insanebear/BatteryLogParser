@@ -3,34 +3,42 @@ import java.util.ArrayList;
 /**
  * Created by Youlim Jung on 2017-05-16.
  */
-public class WifiConn {
-    private ArrayList<String[]> wifiConnInfoArr; // 3G (none+hspa) LTE
+public class WifiConn extends Information{
+    private ArrayList<String[]> wifiConnInfoArr;
 
     public WifiConn() {
         this.wifiConnInfoArr = new ArrayList<>();
     }
+    // parsing
+    @Override
     public void setPrevEndTime(String time){
         String[] prevInfo = wifiConnInfoArr.get(wifiConnInfoArr.size()-1);
-        prevInfo[1] = time;
+        prevInfo[2] = time;
     }
+    @Override
     public String getPrevEndTime(){
+        String[] prevInfo = wifiConnInfoArr.get((wifiConnInfoArr.size()-1));
+        return prevInfo[2];
+    }
+    @Override
+    public String getPrevStartTime(){
         String[] prevInfo = wifiConnInfoArr.get((wifiConnInfoArr.size()-1));
         return prevInfo[1];
     }
-    public String getPrevStartTime(){
-        String[] prevInfo = wifiConnInfoArr.get((wifiConnInfoArr.size()-1));
-        return prevInfo[0];
-    }
+    @Override
     public int getInfoArrLength(){
         return wifiConnInfoArr.size();
     }
-    public void setConnDuration(String duration) {
+    @Override
+    public void setDuration(String duration) {
         String[] prevInfo = wifiConnInfoArr.get((wifiConnInfoArr.size()-1));
-        prevInfo[2] = duration;
+        prevInfo[3] = duration;
     }
-    public void setWifiConnInfoArr(String[] wifiCInfoArr){
-        this.wifiConnInfoArr.add(wifiCInfoArr);
+    @Override
+    public void addInfoArr(String[] infoArr){
+        this.wifiConnInfoArr.add(infoArr);
     }
+    // analyzing
     public ArrayList<String[]> getWifiConnInfoArr() {
         return wifiConnInfoArr;
     }

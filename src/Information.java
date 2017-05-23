@@ -1,47 +1,38 @@
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.ArrayList;
 
 /**
  * Created by Youlim Jung on 2017-05-04.
  */
 public class Information {
-    private final String DATE_FORMAT = "HH'h 'mm'm 'ss's 'SSS'ms'";
-
-//    public Date strToDate(String strTime) throws ParseException {
-////        SimpleDateFormat trasStr = new SimpleDateFormat("HH:mm:ss:SSS");
-//        SimpleDateFormat transStr = new SimpleDateFormat(DATE_FORMAT);
-//        System.out.println(strTime);
-//        return transStr.parse(strTime);
-//    }
-//
-//    public String dateToStr(Date duration){
-//        // Maybe change return type later
-//        SimpleDateFormat transStr = new SimpleDateFormat(DATE_FORMAT);
-//        return transStr.format(duration);
-//    }
 
     public String calculateDuration(String end, String start){
         int[] startTime = strToInt(start);
         int[] endTime = strToInt(end);
         int[] res = new int[startTime.length];
 
-        for(int i=0; i<endTime.length; i++){
-            int interVal = endTime[i]-startTime[i];
-            if(interVal<0){
-                res[i-1] -= 1;
-                if(i!=3){ // h, m, s
-                    res[i] = 60+interVal;
-                }else{ // ms
-                    res[i] = 1000+interVal;
-                }
-            }else{
-                res[i] = interVal;
+        for(int i=0; i<startTime.length; i++) {
+            res[i] = endTime[i] - startTime[i];
+            if(res[i] < 0)
+            {
+                res = subtractHandle(res, i); // start from "hours" unit
             }
         }
-
         return intToStr(res);
+    }
+
+    private int[] subtractHandle(int[] resArr, int pos){
+        if(pos-1 >= 0){ // index is not under 0
+            resArr[pos-1] -= 1;
+            if (pos != 3) { // h, m, s
+                resArr[pos] = 60 + resArr[pos];
+            } else { // ms
+                resArr[pos] = 1000 + resArr[pos];
+            }
+            if(resArr[pos-1] < 0){
+                subtractHandle(resArr, pos-1);
+            }
+        }
+        return resArr;
     }
 
     public String addDuration(String sumDuration, String newDuration){
@@ -85,13 +76,17 @@ public class Information {
     private String intToStr(int[] time){
         String[] strings = new String[time.length];
 
-        strings[0] = String.valueOf(time[0]);
-        strings[1] = String.valueOf(time[1]);
-        strings[2] = String.valueOf(time[2]);
-        strings[3] = String.valueOf(time[3]);
+        for(int i=0; i<4; i++){
+            strings[i] = String.valueOf(time[i]);
+        }
+//        strings[0] = String.valueOf(time[0]);
+//        strings[1] = String.valueOf(time[1]);
+//        strings[2] = String.valueOf(time[2]);
+//        strings[3] = String.valueOf(time[3]);
 
         return padZero(strings);
     }
+
     public String padZero(String[] strings){
         for (int i=0; i<strings.length; i++) {
             if(strings[i]==null && i != 3){ // no digit h, m, s
@@ -113,6 +108,41 @@ public class Information {
 
     private String addUnits(String[] values){
         return values[0]+"h "+values[1]+"m "+values[2]+"s "+values[3]+"ms";
+    }
+
+    public void setPrevEndTime(String time){}
+
+    public String getPrevEndTime(){ return ""; }
+
+    public String getPrevStartTime(){ return ""; }
+
+    public int getInfoArrLength(){ return 0; }
+
+    public void setDuration(String duration) { }
+
+    public void addInfoArr(String[] infoArr){ }
+
+    public void printNamedTrace(ArrayList<String[]> trace){
+        int idx = 1;
+        for (String[] s : trace) {
+            System.out.println("["+idx+"th trace]");
+            System.out.print("Start time: "+s[1]+" ");
+            System.out.print("End time: "+s[2]+" ");
+            System.out.println("Duration: "+s[3]);
+            idx++;
+        }
+    }
+
+    public void printTrace(ArrayList<String[]> trace){
+        int idx = 1;
+        for (String[] s : trace) {
+            System.out.println("["+idx+"th trace]");
+            System.out.print("Start time: "+s[0]+" ");
+            System.out.print("End time: "+s[1]+" ");
+            System.out.println("Duration: "+s[2]);
+            idx++;
+        }
+        System.out.println();
     }
 
 }

@@ -12,16 +12,25 @@ public class Main {
         ArrayList<UserLog> uLogList = new ArrayList<>();
 
         for(File file : dir.listFiles()){
-            Parser parser = new Parser(file);
-            uLogList.add(parser.parseLog());
+            if(file.isDirectory()){
+                System.out.println("Pass Directory for now");
+            }else{
+                Parser parser = new Parser(file);
+                uLogList.add(parser.parseLog());
+            }
         }
-
-//        for (UserLog uLog : uLogList) {
-//            System.out.println("---------------- "+ uLog.getFilename()+" ----------------");
-//            uLog.getScreenContents();
-//            uLog.getGpsInfo();
-//        }
-
+        System.out.println("The number of inputs: "+ uLogList.size());
+        for (UserLog uLog : uLogList) {
+            System.out.println("============================================================ "+
+                    uLog.getFilename()+
+                    " ============================================================");
+            uLog.getCpuInfo().printCpuContents();
+            uLog.getConnInfo().printConnContents();
+            uLog.getScreenInfo().printScreenContents();
+            uLog.getGpsInfo().printGpsContents();
+            uLog.getAudioInfo().printAudioContents();
+            uLog.printTotalTime();
+        }
     }
 
 }

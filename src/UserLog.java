@@ -5,6 +5,7 @@ import java.util.ArrayList;
  */
 public class UserLog {
     private String filename;
+    private String totalTime;
     private AudioInfo audioInfo;
     private ConnInfo connInfo;
     private CpuInfo cpuInfo;
@@ -14,6 +15,18 @@ public class UserLog {
     public String getFilename() { return filename;}
 
     public void setFilename(String filename) { this.filename = filename; }
+
+    public String getTotalTime() {
+        return totalTime;
+    }
+
+    public void setTotalTime(String totalTime) {
+        this.totalTime = totalTime;
+    }
+
+    public void printTotalTime(){
+        System.out.println("Total Usage Time: "+totalTime);
+    }
 
     public AudioInfo getAudioInfo() {
         return audioInfo;
@@ -47,35 +60,11 @@ public class UserLog {
         this.screenInfo = screenInfo;
     }
 
-    public void getGpsInfo() {
-//        System.out.println("GPS Total Duration:"+gpsInfo.getGpsDuration());
-    }
+    public GpsInfo getGpsInfo() { return gpsInfo; }
 
     public void setGpsInfo(GpsInfo gpsInfo) {
         this.gpsInfo = gpsInfo;
     }
 
 
-
-    public void getScreenContents(){
-        ArrayList<String[]> screenHistory = screenInfo.getScreenInfoArr();
-        int idx = 1;
-        for (String[] sa :
-                screenHistory) {
-            System.out.println(idx+"th trace: [Level] "+sa[0]+" [Start Time] "+sa[1]
-                    +" [End Time] "+sa[2]+" [Duration] "+sa[3]);
-            idx++;
-        }
-    }
-
-    public void getGpsContents(){
-        ArrayList<String[]> gpsHistory = gpsInfo.getGpsInfoArr();
-        int idx = 1;
-        for (String[] sa :
-                gpsHistory) {
-            System.out.println(idx+"th trace: [Start Time] "+sa[0]
-                    +" [End Time] "+sa[1]+" [Duration] "+sa[2]);
-            idx++;
-        }
-    }
 }

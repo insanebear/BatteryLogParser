@@ -4,7 +4,7 @@ import java.util.ArrayList;
  * Created by Youlim Jung on 2017-05-16.
  */
 public class BlueToothConn {
-    private ArrayList<String[]> blueToothConnInfoArr; // 3G (none+hspa) LTE
+    private ArrayList<String[]> blueToothConnInfoArr;
 
     public BlueToothConn() {
         this.blueToothConnInfoArr = new ArrayList<>();
