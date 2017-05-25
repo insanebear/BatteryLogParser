@@ -24,12 +24,16 @@ public class Main {
             System.out.println("============================================================ "+
                     uLog.getFilename()+
                     " ============================================================");
+            System.out.println("Log start from "+ uLog.getLogStartTime()+" to "
+                    +uLog.getLogEndTime());
+            uLog.printTotalTime();
+            System.out.println();
             uLog.getCpuInfo().printCpuContents();
             uLog.getConnInfo().printConnContents();
             uLog.getScreenInfo().printScreenContents();
             uLog.getGpsInfo().printGpsContents();
             uLog.getAudioInfo().printAudioContents();
-            uLog.printTotalTime();
+
         }
     }
 

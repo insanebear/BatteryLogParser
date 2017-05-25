@@ -5,7 +5,7 @@ import java.util.ArrayList;
  */
 public class Information {
 
-    public String calculateDuration(String end, String start){
+    public String subtractTimes(String end, String start){
         int[] startTime = strToInt(start);
         int[] endTime = strToInt(end);
         int[] res = new int[startTime.length];
@@ -20,7 +20,7 @@ public class Information {
         return intToStr(res);
     }
 
-    private int[] subtractHandle(int[] resArr, int pos){
+    public int[] subtractHandle(int[] resArr, int pos){
         if(pos-1 >= 0){ // index is not under 0
             resArr[pos-1] -= 1;
             if (pos != 3) { // h, m, s

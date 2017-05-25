@@ -6,6 +6,8 @@ import java.util.ArrayList;
 public class UserLog {
     private String filename;
     private String totalTime;
+    private String logStartTime;
+    private String logEndTime;
     private AudioInfo audioInfo;
     private ConnInfo connInfo;
     private CpuInfo cpuInfo;
@@ -26,6 +28,22 @@ public class UserLog {
 
     public void printTotalTime(){
         System.out.println("Total Usage Time: "+totalTime);
+    }
+
+    public String getLogStartTime() {
+        return logStartTime;
+    }
+
+    public void setLogStartTime(String logStartTime) {
+        this.logStartTime = logStartTime;
+    }
+
+    public String getLogEndTime() {
+        return logEndTime;
+    }
+
+    public void setLogEndTime(String logEndTime) {
+        this.logEndTime = logEndTime;
     }
 
     public AudioInfo getAudioInfo() {

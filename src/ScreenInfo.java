@@ -21,25 +21,30 @@ public class ScreenInfo extends Information {
         String[] prevInfo = screenInfoArr.get(screenInfoArr.size()-1);
         prevInfo[2] = time; // set previous end_timestamp
     }
+
     @Override
     public String getPrevEndTime(){
         String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
         return prevInfo[2];
     }
+
     @Override
     public String getPrevStartTime(){
         String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
         return prevInfo[1];
     }
+
     @Override
     public int getInfoArrLength(){
         return screenInfoArr.size();
     }
+
     @Override
     public void setDuration(String duration){
         String[] prevInfo = screenInfoArr.get((screenInfoArr.size()-1));
         prevInfo[3] = duration;
     }
+
     @Override
     public void addInfoArr(String[] infoArr){
         this.screenInfoArr.add(infoArr);
@@ -50,6 +55,7 @@ public class ScreenInfo extends Information {
         return screenInfoArr;
     }
 
+    // check contents
     public void printScreenContents(){
         ArrayList<String[]> traceBright = findBrightTrace();
         ArrayList<String[]> traceLight = findLightTrace();

@@ -34,26 +34,33 @@ public class Parser {
         userLog.setFilename(file.getName());
 
         while ((s = reader.readLine()) != null) {
-            if (s.contains("Battery History")){
-                while(!(s = reader.readLine()).contains("Per-PID Stats:")){
-                    if(s.contains("gps")){
+            if (s.contains("== dumpstate:") && !s.contains(" done")){
+                parseDumpTime(s);
+            }else if(s.contains("Battery History")) {
+                while (!(s = reader.readLine()).contains("Per-PID Stats:")) {
+                    if (s.contains("gps")) {
                         parseGps(s);
                     }
-                    if(s.contains("brightness=") || s.contains("screen ")){
+                    if (s.contains("brightness=") || s.contains("screen ")) {
                         parseScreen(s);
                     }
-                    if(s.contains("mobile_radio") || s.contains("data_conn=")){
+                    if (s.contains("mobile_radio") || s.contains("data_conn=")) {
                         parseDataConn(s);
                     }
-                    if(s.contains("wifi_radio")){
+                    if (s.contains("wifi_radio")) {
                         parseWifiConn(s);
                     }
-                    if(s.contains("+running") || s.contains("-running")){
+                    if (s.contains("+running") || s.contains("-running")) {
                         parseCpu(s);
                     }
-                    if(s.contains("+audio") || s.contains("-audio")){
+                    if (s.contains("+audio") || s.contains("-audio")) {
                         parseAudio(s);
                     }
+                }
+            }else if(s. contains("--------- beginning of main")){
+                while(!s.contains("[logcat:") &&!s.contains("elapsed]")){
+                    parseBlueConn(s);
+                    s = reader.readLine();
                 }
             } else if(s.contains("Historical broadcasts summary [foreground]:")){
                 while(!s.contains("Historical broadcasts [background]:") &&
@@ -69,7 +76,7 @@ public class Parser {
                     s = reader.readLine();
                 }
             }else if(s.contains("Total run time:")){
-                parseTimeOnBattery(s);
+                parseTotalRuntime(s);
             }
         }
 
@@ -86,6 +93,21 @@ public class Parser {
 
         reader.close();
         return userLog;
+    }
+
+    private void parseDumpTime(String s){
+        String line = s.trim();
+
+        int blankIdx = line.indexOf(" ");
+        line = line.substring(blankIdx+1);
+
+        blankIdx = line.indexOf(" ");
+        line = line.substring(blankIdx+1);
+
+        blankIdx = line.indexOf(" ");
+        line = line.substring(blankIdx+1)+":00";
+
+        userLog.setLogEndTime(line);
     }
 
     private void parseCpu(String s){
@@ -321,26 +343,73 @@ public class Parser {
         }
     }
 
-    private void parseTimeOnBattery(String s){
+    private void parseBlueConn(String s){
+        final String BLUE_CHECK = "BluetoothLeScanner:";
+        String line = s.trim();
+        String[] tempInfo;
+        String time;
+
+        if(line.contains(BLUE_CHECK)){
+            // Parsing time
+            int blankIdx = line.indexOf(" ");
+            line = line.substring(blankIdx+1);
+            blankIdx = line.indexOf(" ");
+            time = connInfo.padZero(line.substring(0, blankIdx).split(":|[.]"));
+            // time stored in actual time (not exceeded time)
+
+            if(line.contains("Stop")){
+                if(connInfo.getBlueToothConn().getInfoArrLength()>0 &&
+                        connInfo.getBlueToothConn().getPrevStartTime() != null){
+                    setTime(connInfo.getBlueToothConn(), time);
+                }
+            }else if(line.contains("Start")){
+                tempInfo = new String[4]; // type, start, end, duration
+                tempInfo[0] = "bluetooth";
+                tempInfo[1] = time;
+                connInfo.getBlueToothConn().addInfoArr(tempInfo);
+            }
+        }
+    }
+
+    private void parseTotalRuntime(String s){
         final String TIME_CHECK = "Total run time:";
         String line = s.trim();
         int idx1 = line.indexOf(TIME_CHECK) + TIME_CHECK.length() + 1;
         int idx2 = line.indexOf("realtime")-1;
         String tempTime = line.substring(idx1, idx2);
-        String time = info.padZero(makeTimeArray(tempTime));
+        String totalTime = info.padZero(makeTimeArray(tempTime));
+        userLog.setTotalTime(totalTime); // set total runtime
 
-        userLog.setTotalTime(time);
-        setTime(cpuInfo, time);
-        setTime(audioInfo, time);
-        setTime(screenInfo, time);
-        setTime(gpsInfo, time);
-        setTime(connInfo.getDataConn(), time);
-        setTime(connInfo.getWifiConn(), time);
+        // calculate the log start time using the DUMP time and the total runtime
+        // DUMP time(log end time) is saved in the format (00:00:00).
+        // startTime means the start time when the log has been recorded.
+        String endTime = info.padZero(userLog.getLogEndTime().split(":"));
+        String totalDuration = userLog.getTotalTime();
+        String startTime = info.subtractTimes(endTime, totalDuration);
 
+        // save the start time in format (00:00:00:000)
+        userLog.setLogStartTime(changeFormat(startTime));
+
+        // set the final end time on blanked information
+        setTime(cpuInfo, totalTime);
+        setTime(audioInfo, totalTime);
+        setTime(screenInfo, totalTime);
+        setTime(gpsInfo, totalTime);
+        setTime(connInfo.getDataConn(), totalTime);
+        setTime(connInfo.getWifiConn(), totalTime);
+
+        ////////Change Bluetooth time/////////
+        // Due to the log of bluetooth saved in actual time
+        if(connInfo.getBlueToothConn().getInfoArrLength()>0){
+            connInfo.getBlueToothConn().setPrevEndTime(totalTime);
+            connInfo.getBlueToothConn().changeTimeFormat(startTime);
+            setTime(connInfo.getBlueToothConn(), totalTime);
+        }
     }
 
     // Parse Time
     private String[] makeTimeArray(String timeString) {
+        // expected input: 0h 0m 0s 0ms
         String[] timeArray = new String[4];
         String[] tempArray = timeString.split(" ");
 
@@ -358,8 +427,6 @@ public class Parser {
                 }
             }
         }
-
-//        System.out.println("Array: "+Arrays.toString(timeArray));
         return timeArray;
     }
 
@@ -397,16 +464,23 @@ public class Parser {
         return result;
     }
 
-    private void setTime(Information infoClass, String time){
-        if(infoClass.getInfoArrLength() > 0){
-            infoClass.setPrevEndTime(time); // update prev end time
+    private void setTime(Information info, String time){
+        if(info.getInfoArrLength() > 0){
+            info.setPrevEndTime(time); // update prev end time
 
-            String startT = infoClass.getPrevStartTime();
-            String endT = infoClass.getPrevEndTime();
-            String duration = infoClass.calculateDuration(endT, startT); // calculate duration
+            String startT = info.getPrevStartTime();
+            String endT = info.getPrevEndTime();
+            String duration = info.subtractTimes(endT, startT); // calculate duration
 
-            infoClass.setDuration(duration);
+            info.setDuration(duration);
         }
+    }
+
+    private String changeFormat(String orinal){
+        // expected input format: 00h 00m 00s 00ms
+        // This method changes "h m s ms" format into ":" format
+        String[] timeArray = makeTimeArray(orinal);
+        return timeArray[0]+":"+timeArray[1]+":"+timeArray[2]+":"+timeArray[3];
     }
 
 }

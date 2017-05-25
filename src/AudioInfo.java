@@ -60,6 +60,7 @@ public class AudioInfo extends Information {
         return audioInfoArr;
     }
 
+    // check contents
     public void printAudioContents(){
         System.out.println("---------------- Audio Trace ----------------");
         printTrace(getAudioInfoArr());

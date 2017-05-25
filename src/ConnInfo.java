@@ -31,6 +31,7 @@ public class ConnInfo extends Information{
         ArrayList<String[]> trace3g = find3gTrace();
         ArrayList<String[]> traceLte = findLteTrace();
         ArrayList<String[]> traceWifi = wifiConn.getWifiConnInfoArr();
+        ArrayList<String []> traceBlue = blueToothConn.getBlueToothConnInfoArr();
 
         System.out.println("---------------- Connectivity Trace ----------------");
         System.out.println("<<<<<<<<<<<<< 3g Trace >>>>>>>>>>>>");
@@ -41,6 +42,8 @@ public class ConnInfo extends Information{
         System.out.println();
         System.out.println("<<<<<<<<<<<<< wifi Trace >>>>>>>>>>");
         printNamedTrace(traceWifi);
+        System.out.println("<<<<<<<<<<<<< bluetooth Trace >>>>>>>>>>");
+        printNamedTrace(traceBlue);
     }
 
     public ArrayList<String[]> find3gTrace (){
@@ -57,6 +60,7 @@ public class ConnInfo extends Information{
         }
         return trace3g;
     }
+
     public ArrayList<String[]> findLteTrace(){
         ArrayList<String[]> dataInfoArr = dataConn.getDataConnInfoArr();
         ArrayList<String[]> traceLte = new ArrayList<>();
