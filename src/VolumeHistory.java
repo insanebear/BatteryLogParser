@@ -7,7 +7,7 @@ public class VolumeHistory {
 
     public VolumeHistory() {
         this.summaryType = "";
-        this.volumeLevel = new int[10];
+        this.volumeLevel = new int[16];
     }
 
     public String getSummaryType() {

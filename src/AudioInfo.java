@@ -9,7 +9,7 @@ import java.util.ArrayList;
  ******************************/
 /************* VolumeHistory **************
  *     String               int[]
- *   summary type     volume count (0~9)
+ *   summary type     volume count (0~15)
  * (fore/background)          ++
  *****************************************/
 public class AudioInfo extends Information {

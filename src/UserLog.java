@@ -5,6 +5,7 @@ import java.util.ArrayList;
  */
 public class UserLog {
     private String filename;
+    private String androidVer;
     private String totalTime;
     private String logStartTime;
     private String logEndTime;
@@ -17,6 +18,14 @@ public class UserLog {
     public String getFilename() { return filename;}
 
     public void setFilename(String filename) { this.filename = filename; }
+
+    public String getAndroidVer() {
+        return androidVer;
+    }
+
+    public void setAndroidVer(String androidVer) {
+        this.androidVer = androidVer;
+    }
 
     public String getTotalTime() {
         return totalTime;

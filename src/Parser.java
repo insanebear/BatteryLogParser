@@ -1,5 +1,10 @@
+import javax.jws.soap.SOAPBinding;
 import java.io.*;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Youlim Jung on 2017-05-02.
@@ -26,17 +31,50 @@ public class Parser {
     }
 
     public UserLog parseLog() throws IOException, ParseException {
-
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String s;
 
         System.out.println("Now parsing "+file.getName());
         userLog.setFilename(file.getName());
 
-        while ((s = reader.readLine()) != null) {
+        while(!(s = reader.readLine()).contains("UPTIME (uptime)")){
             if (s.contains("== dumpstate:") && !s.contains(" done")){
                 parseDumpTime(s);
-            }else if(s.contains("Battery History")) {
+            }else if(s.contains("Build fingerprint")){
+                Pattern pattern = Pattern.compile(":[0-9]\\.[0-9]");
+                Matcher matcher = pattern.matcher(s);
+                if(matcher.find()){
+                    userLog.setAndroidVer(matcher.group().substring(1));
+                }
+            }
+        }
+
+        if(userLog.getAndroidVer().charAt(0) == '6'){
+            parseMarshmallow(reader);
+        }else {
+            parseNougat(reader);
+        }
+
+        // CPU
+        userLog.setCpuInfo(cpuInfo);
+        // Audio
+        userLog.setAudioInfo(audioInfo);
+        // Screen
+        userLog.setScreenInfo(screenInfo);
+        // GPS
+        userLog.setGpsInfo(gpsInfo);
+        // Network Connectivity
+        userLog.setConnInfo(connInfo);
+
+        reader.close();
+        return userLog;
+    }
+
+    public void parseMarshmallow(BufferedReader reader) throws IOException {
+        String s;
+
+        while ((s = reader.readLine()) != null) {
+            if(s.contains("Battery History")) {
                 while (!(s = reader.readLine()).contains("Per-PID Stats:")) {
                     if (s.contains("gps")) {
                         parseGps(s);
@@ -79,20 +117,55 @@ public class Parser {
                 parseTotalRuntime(s);
             }
         }
+    }
 
-        // CPU
-        userLog.setCpuInfo(cpuInfo);
-        // Audio
-        userLog.setAudioInfo(audioInfo);
-        // Screen
-        userLog.setScreenInfo(screenInfo);
-        // GPS
-        userLog.setGpsInfo(gpsInfo);
-        // Network Connectivity
-        userLog.setConnInfo(connInfo);
+    public void parseNougat(BufferedReader reader) throws IOException {
+        String s;
 
-        reader.close();
-        return userLog;
+        while ((s = reader.readLine()) != null) {
+            if(s.contains("Battery History")) {
+                while (!(s = reader.readLine()).contains("Per-PID Stats:")) {
+                    if (s.contains("gps")) {
+                        parseGps(s);
+                    }
+                    if (s.contains("brightness=") || s.contains("screen ")) {
+                        parseScreen(s);
+                    }
+                    if (s.contains("mobile_radio") || s.contains("data_conn=")) {
+                        parseDataConn(s);
+                    }
+                    if (s.contains("wifi_radio")) {
+                        parseWifiConn(s);
+                    }
+                    if (s.contains("+running") || s.contains("-running")) {
+                        parseCpu(s);
+                    }
+                    if (s.contains("+audio") || s.contains("-audio")) {
+                        parseAudio(s);
+                    }
+                }
+            }else if(s. contains("------ SYSTEM LOG")){
+                while(!s.contains("the duration of 'SYSTEM LOG' ------")){
+                    parseBlueConn(s);
+                    s = reader.readLine();
+                }
+            } else if(s.contains("Historical broadcasts summary [foreground]:")){
+                while(!s.contains("Historical broadcasts [background]:") &&
+                        !s.contains("Delayed Historical broadcasts [foreground]:")){
+                    parseVolumeFore(s);
+                    s = reader.readLine();
+                }
+            }else if(s.contains("Historical broadcasts summary [background]:")){
+                while(!s.contains("Sticky broadcasts for user -1:") &&
+                        !s.contains("Aborted Historical broadcasts [background]:")){
+
+                    parseVolumeBack(s);
+                    s = reader.readLine();
+                }
+            }else if(s.contains("Total run time:")){
+                parseTotalRuntime(s);
+            }
+        }
     }
 
     private void parseDumpTime(String s){
@@ -160,7 +233,6 @@ public class Parser {
 
     private void parseVolumeFore(String s) {
         final String SUMMARY_CHECK = "Historical broadcasts summary";
-        final String VOLUME_CHECK = "android.media.EXTRA_VOLUME_STREAM_VALUE=";
 
         String line = s.trim();
         VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
@@ -176,16 +248,18 @@ public class Parser {
         }
 
         // count volume level
-        if (s.contains(VOLUME_CHECK)) {
-            int idxVolume = line.indexOf(VOLUME_CHECK) + VOLUME_CHECK.length();
-            int level = Integer.parseInt((line.substring(idxVolume, idxVolume + 1)));
+        Pattern pattern = Pattern.compile("android\\.media\\.EXTRA\\_VOLUME\\_STREAM\\_VALUE\\=[0-9]++");
+        Matcher matcher = pattern.matcher(line);
+
+        if (matcher.find()) {
+            String volumeStr = matcher.group();
+            int level = Integer.parseInt(volumeStr.substring(volumeStr.indexOf('=')+1));
             volumeHistories[0].setVolumeLevel(level);
         }
     }
 
     private void parseVolumeBack(String s){
         final String SUMMARY_CHECK = "Historical broadcasts summary";
-        final String VOLUME_CHECK = "android.media.EXTRA_VOLUME_STREAM_VALUE=";
 
         String line = s.trim();
         VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
@@ -203,9 +277,12 @@ public class Parser {
         }
 
         // count volume level
-        if(s.contains(VOLUME_CHECK)){
-            int idxVolume = line.indexOf(VOLUME_CHECK) + VOLUME_CHECK.length();
-            int level = Integer.parseInt((line.substring(idxVolume, idxVolume+1)));
+        Pattern pattern = Pattern.compile("android\\.media\\.EXTRA\\_VOLUME\\_STREAM\\_VALUE\\=[0-9]++");
+        Matcher matcher = pattern.matcher(line);
+
+        if (matcher.find()) {
+            String volumeStr = matcher.group();
+            int level = Integer.parseInt(volumeStr.substring(volumeStr.indexOf('=')+1));
             volumeHistories[1].setVolumeLevel(level);
         }
     }
@@ -305,7 +382,8 @@ public class Parser {
         }else if(line.contains(DATACONN_CHECK)) {
             tempInfo = new String[4]; // type, start, end, duration
             int idx = line.indexOf(DATACONN_CHECK) + DATACONN_CHECK.length();
-            if (line.charAt(idx) == 'n' || line.charAt(idx) == 'h') { // none or hspa
+            if (line.charAt(idx) == 'n' || line.charAt(idx) == 'h'
+                    || line.charAt(idx) == 'u') { // none or hspa or umts
                 tempInfo[0] = "3g";
             } else if (line.charAt(idx) == 'l') { // lte
                 tempInfo[0] = "lte";
@@ -348,6 +426,7 @@ public class Parser {
         String line = s.trim();
         String[] tempInfo;
         String time;
+        int connArrSize = connInfo.getBlueToothConn().getInfoArrLength();
 
         if(line.contains(BLUE_CHECK)){
             // Parsing time
@@ -358,15 +437,17 @@ public class Parser {
             // time stored in actual time (not exceeded time)
 
             if(line.contains("Stop")){
-                if(connInfo.getBlueToothConn().getInfoArrLength()>0 &&
+                if(connArrSize>0 &&
                         connInfo.getBlueToothConn().getPrevStartTime() != null){
                     setTime(connInfo.getBlueToothConn(), time);
                 }
             }else if(line.contains("Start")){
-                tempInfo = new String[4]; // type, start, end, duration
-                tempInfo[0] = "bluetooth";
-                tempInfo[1] = time;
-                connInfo.getBlueToothConn().addInfoArr(tempInfo);
+                if(connInfo.getBlueToothConn().checkStartTime()){
+                    tempInfo = new String[4]; // type, start, end, duration
+                    tempInfo[0] = "bluetooth";
+                    tempInfo[1] = time;
+                    connInfo.getBlueToothConn().addInfoArr(tempInfo);
+                }
             }
         }
     }
@@ -401,6 +482,7 @@ public class Parser {
         ////////Change Bluetooth time/////////
         // Due to the log of bluetooth saved in actual time
         if(connInfo.getBlueToothConn().getInfoArrLength()>0){
+
             connInfo.getBlueToothConn().setPrevEndTime(totalTime);
             connInfo.getBlueToothConn().changeTimeFormat(startTime);
             setTime(connInfo.getBlueToothConn(), totalTime);

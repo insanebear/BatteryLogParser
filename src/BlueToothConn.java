@@ -28,6 +28,18 @@ public class BlueToothConn extends Information{
         return prevInfo[1];
     }
 
+    public Boolean checkStartTime(){
+        if(getInfoArrLength() > 0){
+            String[] lastElem = blueToothConnInfoArr.get(getInfoArrLength()-1);
+            if(lastElem[2]==null){
+                return false;
+            }else{
+                return true;
+            }
+        }
+        return true;
+    }
+
     @Override
     public int getInfoArrLength(){
         return blueToothConnInfoArr.size();

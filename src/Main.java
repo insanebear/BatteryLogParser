@@ -24,6 +24,7 @@ public class Main {
             System.out.println("============================================================ "+
                     uLog.getFilename()+
                     " ============================================================");
+            System.out.println("Android Version: "+uLog.getAndroidVer());
             System.out.println("Log start from "+ uLog.getLogStartTime()+" to "
                     +uLog.getLogEndTime());
             uLog.printTotalTime();
