@@ -54,7 +54,6 @@ public class ConnInfo extends Information{
         if(dataInfoArr.size()>0){
             for (int i=0; i<dataInfoArr.size(); i++) {
                 String[] trace = dataInfoArr.get(i);
-                System.out.println(trace[0]);
                 if (trace[0].equals("3g")) {
                     trace3g.add(trace);
                 }
