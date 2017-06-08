@@ -103,14 +103,13 @@ public class Parser {
             } else if(s.contains("Historical broadcasts summary [foreground]:")){
                 while(!s.contains("Historical broadcasts [background]:") &&
                         !s.contains("Delayed Historical broadcasts [foreground]:")){
-                    parseVolumeFore(s);
+                    parseVolume(s);
                     s = reader.readLine();
                 }
             }else if(s.contains("Historical broadcasts summary [background]:")){
                 while(!s.contains("Sticky broadcasts for user -1:") &&
                         !s.contains("Aborted Historical broadcasts [background]:")){
-
-                    parseVolumeBack(s);
+                    parseVolume(s);
                     s = reader.readLine();
                 }
             }else if(s.contains("Total run time:")){
@@ -152,14 +151,13 @@ public class Parser {
             } else if(s.contains("Historical broadcasts summary [foreground]:")){
                 while(!s.contains("Historical broadcasts [background]:") &&
                         !s.contains("Delayed Historical broadcasts [foreground]:")){
-                    parseVolumeFore(s);
+                    parseVolume(s);
                     s = reader.readLine();
                 }
             }else if(s.contains("Historical broadcasts summary [background]:")){
                 while(!s.contains("Sticky broadcasts for user -1:") &&
                         !s.contains("Aborted Historical broadcasts [background]:")){
-
-                    parseVolumeBack(s);
+                    parseVolume(s);
                     s = reader.readLine();
                 }
             }else if(s.contains("Total run time:")){
@@ -231,21 +229,9 @@ public class Parser {
         }
     }
 
-    private void parseVolumeFore(String s) {
-        final String SUMMARY_CHECK = "Historical broadcasts summary";
-
+    private void parseVolume(String s) {
         String line = s.trim();
-        VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
-        String type = "";
-        int idx = line.indexOf(SUMMARY_CHECK);
-
-        // save the summary type
-        if (s.contains(SUMMARY_CHECK)) {
-            type = line.substring(idx + SUMMARY_CHECK.length() + 2, line.length() - 2);
-            if (type.equals("foreground")) {
-                volumeHistories[0].setSummaryType("foreground");
-            }
-        }
+        int[] volumeHistories = audioInfo.getVolumeHistories();
 
         // count volume level
         Pattern pattern = Pattern.compile("android\\.media\\.EXTRA\\_VOLUME\\_STREAM\\_VALUE\\=[0-9]++");
@@ -254,36 +240,7 @@ public class Parser {
         if (matcher.find()) {
             String volumeStr = matcher.group();
             int level = Integer.parseInt(volumeStr.substring(volumeStr.indexOf('=')+1));
-            volumeHistories[0].setVolumeLevel(level);
-        }
-    }
-
-    private void parseVolumeBack(String s){
-        final String SUMMARY_CHECK = "Historical broadcasts summary";
-
-        String line = s.trim();
-        VolumeHistory[] volumeHistories = audioInfo.getVolumeHistories();
-
-        int idx = line.indexOf(SUMMARY_CHECK);
-
-        String type = "";
-
-        // save the summary type
-        if(s.contains(SUMMARY_CHECK)){
-            type = line.substring(idx+SUMMARY_CHECK.length()+2, line.length()-2);
-            if(type.equals("background")){
-                volumeHistories[1].setSummaryType("background");
-            }
-        }
-
-        // count volume level
-        Pattern pattern = Pattern.compile("android\\.media\\.EXTRA\\_VOLUME\\_STREAM\\_VALUE\\=[0-9]++");
-        Matcher matcher = pattern.matcher(line);
-
-        if (matcher.find()) {
-            String volumeStr = matcher.group();
-            int level = Integer.parseInt(volumeStr.substring(volumeStr.indexOf('=')+1));
-            volumeHistories[1].setVolumeLevel(level);
+            volumeHistories[level]+=1;
         }
     }
 

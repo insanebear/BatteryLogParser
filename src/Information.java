@@ -35,26 +35,33 @@ public class Information {
         return resArr;
     }
 
-    public String addDuration(String sumDuration, String newDuration){
-        int[] totDuration = strToInt(sumDuration);
-        int[] element = strToInt(newDuration);
+    public String addTimes(String sumDuration, String newDuration){
+        int[] sum = strToInt(sumDuration);
+        int[] operand = strToInt(newDuration);
+        int[] res = new int[4];
 
-        for(int i=0; i<totDuration.length; i++){
-            int interVal = totDuration[i]+element[i];
-
-            if(interVal>=60){
-                if(interVal>=1000){ // ms
-                    interVal-=1000;
-                }else{ // h, m, s
-                    interVal-=60;
-                }
-                totDuration[i-1]+=1;
-                totDuration[i] = interVal;
-            }else{
-                totDuration[i] = interVal;
+        for(int i=0; i<4; i++) {
+            res[i] = sum[i] + operand[i];
+            if((res[i] >= 60 && i<=2) || (res[i] >= 1000 && i==3)){
+                res = addHandle(res, i);
             }
         }
-        return intToStr(totDuration);
+        return intToStr(res);
+    }
+
+    public int[] addHandle(int[] resArr, int pos){
+        if(pos-1 >= 0){ // index is not under 0
+            resArr[pos-1] += 1;
+            if (pos != 3) { // h, m, s
+                resArr[pos] = resArr[pos] - 60;
+            } else { // ms
+                resArr[pos] = resArr[pos] - 1000;
+            }
+            if((resArr[pos-1] >= 60 && (pos-1)<=2) || (resArr[pos-1] >= 1000 && (pos-1)==3)){
+                addHandle(resArr, pos-1);
+            }
+        }
+        return resArr;
     }
 
     private int[] strToInt(String time){

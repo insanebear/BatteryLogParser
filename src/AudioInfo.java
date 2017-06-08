@@ -14,14 +14,11 @@ import java.util.ArrayList;
  *****************************************/
 public class AudioInfo extends Information {
     private ArrayList<String[]> audioInfoArr;
-    private VolumeHistory[] volumeHistories;
-//    private ArrayList<VolumeHistory> volumeHistories;
+    private int[] volumeHistories;
 
     public AudioInfo() {
         this.audioInfoArr = new ArrayList<>();
-        this.volumeHistories = new VolumeHistory[2];
-        volumeHistories[0] = new VolumeHistory();
-        volumeHistories[1] = new VolumeHistory();
+        this.volumeHistories = new int[16];
     }
     @Override
     public void setPrevEndTime(String time){
@@ -52,7 +49,7 @@ public class AudioInfo extends Information {
         this.audioInfoArr.add(infoArr);
     }
 
-    public VolumeHistory[] getVolumeHistories() {
+    public int[] getVolumeHistories() {
         return volumeHistories;
     }
 
@@ -60,18 +57,16 @@ public class AudioInfo extends Information {
         return audioInfoArr;
     }
 
+
     // check contents
     public void printAudioContents(){
         System.out.println("---------------- Audio Trace ----------------");
         printTrace(getAudioInfoArr());
         System.out.println();
         System.out.println("---------------- Volume Count ----------------");
-        for(VolumeHistory volumeHistory: volumeHistories){
-            System.out.println(volumeHistory.getSummaryType());
-            for(int i=0; i<10; i++){
+        for(int i=0; i<16; i++){
                 System.out.print("[volume lev "+i+"] : ");
-                System.out.println(volumeHistory.getVolumeLevel()[i]);
-            }
+                System.out.println(volumeHistories[i]);
         }
     }
 }
