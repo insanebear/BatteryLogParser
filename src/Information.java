@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -129,24 +131,34 @@ public class Information {
 
     public void addInfoArr(String[] infoArr){ }
 
-    public void printNamedTrace(ArrayList<String[]> trace){
+    public void printNamedTrace(BufferedWriter out, ArrayList<String[]> trace) throws IOException {
         int idx = 1;
         for (String[] s : trace) {
             System.out.println("["+idx+"th trace]");
             System.out.print("Start time: "+s[1]+" ");
             System.out.print("End time: "+s[2]+" ");
             System.out.println("Duration: "+s[3]);
+
+            out.write("["+idx+"th trace]");out.newLine();
+            out.write("Start time: "+s[1]+" End time: "+s[2]+" Duration: "+s[3]);out.newLine();
+
             idx++;
         }
     }
 
-    public void printTrace(ArrayList<String[]> trace){
+    public void printTrace(BufferedWriter out,ArrayList<String[]> trace) throws IOException {
         int idx = 1;
         for (String[] s : trace) {
-            System.out.println("["+idx+"th trace]");
-            System.out.print("Start time: "+s[0]+" ");
-            System.out.print("End time: "+s[1]+" ");
-            System.out.println("Duration: "+s[2]);
+            String tmpStr = "";
+
+            tmpStr = "["+idx+"th trace]";
+            System.out.println(tmpStr);
+            out.write(tmpStr); out.newLine();
+
+            tmpStr="Start time: "+s[0]+" End time: "+s[1]+" Duration: "+s[2];
+            System.out.println(tmpStr);
+            out.write(tmpStr); out.newLine();
+
             idx++;
         }
         System.out.println();

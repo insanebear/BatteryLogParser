@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -28,23 +30,40 @@ public class ConnInfo extends Information{
         return blueToothConn;
     }
 
-    public void printConnContents(){
+    public void printConnContents(BufferedWriter out) throws IOException {
         ArrayList<String[]> trace3g = find3gTrace();
         ArrayList<String[]> traceLte = findLteTrace();
         ArrayList<String[]> traceWifi = wifiConn.getWifiConnInfoArr();
         ArrayList<String []> traceBlue = blueToothConn.getBlueToothConnInfoArr();
 
         System.out.println("---------------- Connectivity Trace ----------------");
+        out.write("---------------- Connectivity Trace ----------------");out.newLine();
+
         System.out.println("<<<<<<<<<<<<< 3g Trace >>>>>>>>>>>>");
-        printNamedTrace(trace3g);
+        out.write("<<<<<<<<<<<<< 3g Trace >>>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, trace3g);
+
         System.out.println();
+        out.newLine();
+
         System.out.println("<<<<<<<<<<<<< lte Trace >>>>>>>>>>>");
-        printNamedTrace(traceLte);
+        out.write("<<<<<<<<<<<<< lte Trace >>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceLte);
+
         System.out.println();
+        out.newLine();
+
         System.out.println("<<<<<<<<<<<<< wifi Trace >>>>>>>>>>");
-        printNamedTrace(traceWifi);
+        out.write("<<<<<<<<<<<<< wifi Trace >>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceWifi);
+
         System.out.println("<<<<<<<<<<<<< bluetooth Trace >>>>>>>>>>");
-        printNamedTrace(traceBlue);
+        out.write("<<<<<<<<<<<<< bluetooth Trace >>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceBlue);
     }
 
     public ArrayList<String[]> find3gTrace (){

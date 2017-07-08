@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -55,8 +57,9 @@ public class CpuInfo extends Information{
     }
 
     // checking
-    public void printCpuContents(){
+    public void printCpuContents(BufferedWriter out) throws IOException {
         System.out.println("---------------- CPU Trace ----------------");
-        printTrace(getCpuInfoArr());
+        out.write("---------------- CPU Trace ----------------");out.newLine();
+        printTrace(out, getCpuInfoArr());
     }
 }

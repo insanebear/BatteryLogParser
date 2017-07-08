@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 //import java.time.Duration;
 
@@ -56,7 +58,7 @@ public class ScreenInfo extends Information {
     }
 
     // check contents
-    public void printScreenContents(){
+    public void printScreenContents(BufferedWriter out) throws IOException {
         ArrayList<String[]> traceBright = findBrightTrace();
         ArrayList<String[]> traceLight = findLightTrace();
         ArrayList<String[]> traceMedium = findMediumTrace();
@@ -64,16 +66,32 @@ public class ScreenInfo extends Information {
         ArrayList<String[]> traceDark = findDarkTrace();
 
         System.out.println("---------------- Screen Trace ----------------");
+        out.write("---------------- Screen Trace ----------------");out.newLine();
+
         System.out.println("<<<<<<<<<<<<< Bright Trace >>>>>>>>>>>>");
-        printNamedTrace(traceBright);
+        out.write("<<<<<<<<<<<<< Bright Trace >>>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceBright);
+
         System.out.println("<<<<<<<<<<<<< Light Trace >>>>>>>>>>>");
-        printNamedTrace(traceLight);
+        out.write("<<<<<<<<<<<<< Light Trace >>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceLight);
+
         System.out.println("<<<<<<<<<<<<< Medium Trace >>>>>>>>>>>");
-        printNamedTrace(traceMedium);
+        out.write("<<<<<<<<<<<<< Medium Trace >>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceMedium);
+
         System.out.println("<<<<<<<<<<<<< Dim Trace >>>>>>>>>>>");
-        printNamedTrace(traceDim);
+        out.write("<<<<<<<<<<<<< Dim Trace >>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceDim);
+
         System.out.println("<<<<<<<<<<<<< Dark Trace >>>>>>>>>>>");
-        printNamedTrace(traceDark);
+        out.write("<<<<<<<<<<<<< Dark Trace >>>>>>>>>>>");out.newLine();
+
+        printNamedTrace(out, traceDark);
     }
 
     public ArrayList<String[]> findBrightTrace(){

@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -59,14 +61,19 @@ public class AudioInfo extends Information {
 
 
     // check contents
-    public void printAudioContents(){
+    public void printAudioContents(BufferedWriter out)throws IOException {
         System.out.println("---------------- Audio Trace ----------------");
-        printTrace(getAudioInfoArr());
+        out.write("---------------- Audio Trace ----------------");out.newLine();
+        printTrace(out, getAudioInfoArr());
         System.out.println();
+
         System.out.println("---------------- Volume Count ----------------");
-        for(int i=0; i<16; i++){
-                System.out.print("[volume lev "+i+"] : ");
-                System.out.println(volumeHistories[i]);
+        out.write("---------------- Volume Count ----------------");out.newLine();
+
+        for(int i=0; i<16; i++) {
+            System.out.print("[volume lev " + i + "] : ");
+            System.out.println(volumeHistories[i]);
+            out.write("[volume lev " + i + "] : "+volumeHistories[i]);out.newLine();
         }
     }
 }

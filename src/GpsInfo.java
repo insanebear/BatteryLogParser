@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -49,9 +51,10 @@ public class GpsInfo extends Information {
         return gpsInfoArr;
     }
 
-    public void printGpsContents(){
+    public void printGpsContents(BufferedWriter out) throws IOException {
         System.out.println("---------------- GPS Trace ----------------");
-        printTrace(getGpsInfoArr());
+        out.write("---------------- GPS Trace ----------------");out.newLine();
+        printTrace(out, getGpsInfoArr());
     }
 
 }

@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -19,12 +21,22 @@ public class UserLog {
 
     public void setFilename(String filename) { this.filename = filename; }
 
+    public void printFilename(BufferedWriter out) throws IOException {
+        System.out.println(" ===== File name: "+ getFilename()+" =====");
+        out.write(" ===== File name: "+ getFilename()+" =====");out.newLine();
+    }
+
     public String getAndroidVer() {
         return androidVer;
     }
 
     public void setAndroidVer(String androidVer) {
         this.androidVer = androidVer;
+    }
+
+    public void printAndroidVer(BufferedWriter out) throws IOException {
+        System.out.println("* Android Version: "+ getAndroidVer());
+        out.write("* Android Version: "+ getAndroidVer());out.newLine();
     }
 
     public String getTotalTime() {
@@ -35,8 +47,13 @@ public class UserLog {
         this.totalTime = totalTime;
     }
 
-    public void printTotalTime(){
+    public void printTotalTime(BufferedWriter out) throws IOException {
+        System.out.println("Log start from "+getLogStartTime()+" to "+getLogEndTime());
+        out.write("Log start from "+getLogStartTime()+" to "+getLogEndTime());out.newLine();
+
         System.out.println("Total Usage Time: "+totalTime);
+        out.write("Total Usage Time: "+totalTime);out.newLine();out.newLine();
+        System.out.println();
     }
 
     public String getLogStartTime() {
